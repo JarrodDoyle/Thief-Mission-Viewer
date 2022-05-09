@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using ImGuiNET;
 using Raylib_cs;
 
-namespace RlImGuiApp;
+namespace RlImGuiApp.UI;
 
 public static class ImGuiController
 {

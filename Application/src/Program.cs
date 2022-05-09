@@ -16,34 +16,32 @@ internal static class Program
 
     private static void Main(string[] args)
     {
-        InitWindow(1280, 720, "Raylib + Dear ImGui app");
+        InitWindow(1280, 720, "TMV");
         
-        ImGuiController.Setup();
-        var uiLayers = new List<UiLayer> {new ExampleUiLayer {Open = true}};
-        foreach (UiLayer layer in uiLayers)
+        UI.ImGuiController.Setup();
+        var uiLayers = new List<UI.UiLayer> {new UI.Layers.ExampleUiLayer {Open = true}};
+        foreach (UI.UiLayer layer in uiLayers)
             layer.Attach();
 
         while (!Raylib.WindowShouldClose())
         {
-            foreach (UiLayer layer in uiLayers)
+            foreach (UI.UiLayer layer in uiLayers)
                 layer.Update();
 
             Raylib.BeginDrawing();
-            
             Raylib.ClearBackground(Color.RAYWHITE);
-            Raylib.DrawFPS(0, 0);
 
-            ImGuiController.Begin();
+            UI.ImGuiController.Begin();
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
             ImGui.ShowDemoWindow();
-            foreach (UiLayer layer in uiLayers)
+            foreach (UI.UiLayer layer in uiLayers)
                 layer.Render();
-            ImGuiController.End();
+            UI.ImGuiController.End();
 
             Raylib.EndDrawing();
         }
 
-        ImGuiController.Shutdown();
+        UI.ImGuiController.Shutdown();
         Raylib.CloseWindow();
     }
 }
