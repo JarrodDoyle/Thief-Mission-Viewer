@@ -8,7 +8,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -45,7 +45,7 @@ internal static class Program
             Raylib.ClearBackground(Color.BLACK);
 
             Raylib.BeginMode3D(camera);
-            exampleLayer.WorldRepMesh?.Render();
+            WorldRepManager.Render();
             Raylib.EndMode3D();
 
             UI.ImGuiController.Begin();

@@ -7,17 +7,10 @@ namespace RlImGuiApp.UI.Layers;
 
 public class ExampleUiLayer : UiLayer
 {
-    private DbFile? _dbFile;
-    private WorldRep? _worldRep;
-    public WorldRepMesh? WorldRepMesh;
 
     public override void Attach()
     {
         Console.WriteLine("Attached layer");
-
-        _dbFile = new DbFile("../../../../Data/miss1.mis");
-        _worldRep = new WorldRep(_dbFile);
-        WorldRepMesh = new WorldRepMesh(_worldRep);
     }
 
     public override void Detach()
@@ -32,15 +25,15 @@ public class ExampleUiLayer : UiLayer
 
         if (ImGui.Begin("LGDB Header Info", ref isOpen))
         {
-            ImGui.Text($"TOC Offset: {_dbFile?.Header.TocOffset}");
-            ImGui.Text($"DB Version: {_dbFile?.Header.Version}");
-            ImGui.Text($"Deadbeef: {_dbFile?.Header.Deadbeef}");
+            ImGui.Text($"TOC Offset: {WorldRepManager.DbFile?.Header.TocOffset}");
+            ImGui.Text($"DB Version: {WorldRepManager.DbFile?.Header.Version}");
+            ImGui.Text($"Deadbeef: {WorldRepManager.DbFile?.Header.Deadbeef}");
             ImGui.End();
         }
 
-        if (ImGui.Begin("LGDB Table of Contents", ref isOpen))
+        if (ImGui.Begin("LGDB Table of Contents", ref isOpen) && WorldRepManager.DbFile?.TableOfContents != null)
         {
-            var toc = _dbFile!.TableOfContents;
+            var toc = WorldRepManager.DbFile.TableOfContents;
             var itemCount = (int) toc.ItemCount;
             var keys = toc.Items.Keys.ToArray();
             ImGui.Text($"Item count: {itemCount}");
@@ -53,10 +46,26 @@ public class ExampleUiLayer : UiLayer
 
         if (ImGui.Begin("World Rep"))
         {
-            ImGui.Text($"Type: {_worldRep?.Chunk?.Header.Name}");
-            ImGui.Text($"Version: {_worldRep?.Chunk?.Header.Version}");
-            ImGui.Text($"Cell count: {_worldRep?.Header.CellCount}");
-            ImGui.Text($"Data size: {_worldRep?.Header.DataSize}");
+            ImGui.Text($"Type: {WorldRepManager.WorldRep?.Chunk?.Header.Name}");
+            ImGui.Text($"Version: {WorldRepManager.WorldRep?.Chunk?.Header.Version}");
+            ImGui.Text($"Cell count: {WorldRepManager.WorldRep?.Header.CellCount}");
+            ImGui.Text($"Data size: {WorldRepManager.WorldRep?.Header.DataSize}");
+            ImGui.End();
+        }
+
+        if (ImGui.Begin("File List"))
+        {
+            ImGui.BeginListBox("Files", ImGui.GetContentRegionAvail());
+            var selected = WorldRepManager.SelectedFile;
+            for (int i = 0; i < WorldRepManager.Files.Length; i++)
+            {
+                var isSelected = i == selected;
+                if (ImGui.Selectable($"{WorldRepManager.Files[i].Name}", isSelected))
+                    WorldRepManager.LoadFile(i);
+                if (isSelected)
+                    ImGui.SetItemDefaultFocus();
+            }
+            ImGui.EndListBox();
             ImGui.End();
         }
 
