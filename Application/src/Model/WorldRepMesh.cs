@@ -8,37 +8,50 @@ public class WorldRepMesh
 
     public WorldRepMesh(LG.WorldRep worldRep)
     {
+        var rnd = new Random();
         var models = new List<Raylib_cs.Model>();
         var numCells = worldRep.Cells.Length;
         for (int i = 0; i < numCells; i++)
         {
+            // If the cell has no visible tris we ignore it
             var cell = worldRep.Cells[i];
             if (cell.Triangles.Count == 0) continue;
 
             var mesh = new Raylib_cs.Mesh();
             var numVertices = cell.PVertices.Length;
             mesh.vertexCount = numVertices;
-            
+
+            // Read geometry vertices and convert to float arr
             var vertices = new float[numVertices * 3];
             for (int j = 0; j < numVertices; j++)
             {
                 var v = cell.PVertices[j];
                 var idx = j * 3;
-                vertices[idx + 0] = v.X;
+                // Reverse winding-order
+                vertices[idx + 2] = v.X;
                 vertices[idx + 1] = v.Y;
-                vertices[idx + 2] = v.Z;
+                vertices[idx + 0] = v.Z;
             }
-            
+
+            var colors = new byte[numVertices * 4];
+            for (int j = 0; j < numVertices; j++)
+            {
+                var c = rnd.Next(100, 255);
+                var idx = j * 4;
+                colors[idx] = (byte) rnd.Next(100, 255);
+                colors[idx + 1] = (byte) rnd.Next(100, 255);
+                colors[idx + 2] = (byte) rnd.Next(100, 255);
+                colors[idx + 3] = 255;
+            }
+
+            // Read geometry triangles
             var tris = cell.Triangles;
             mesh.triangleCount = tris.Count / 3;
             var indices = new ushort[tris.Count];
             for (int j = 0; j < tris.Count; j++)
                 indices[j] = (ushort) tris[j];
 
-            var colors = new byte[numVertices * 4];
-            for (int j = 0; j < numVertices * 4; j++)
-                colors[j] = 255;
-            
+            // Set the data on the mesh
             unsafe
             {
                 fixed (float* verticesPtr = vertices)
@@ -49,7 +62,6 @@ public class WorldRepMesh
                     mesh.indices = indicesPtr;
             }
 
-            // mesh = Raylib_cs.Raylib.GenMeshCube(5, 5, 5);
             Raylib_cs.Raylib.UploadMesh(ref mesh, false);
             var model = Raylib_cs.Raylib.LoadModelFromMesh(mesh);
             models.Add(model);

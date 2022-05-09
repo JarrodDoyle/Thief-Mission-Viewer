@@ -41,14 +41,12 @@ public class ExampleUiLayer : UiLayer
         if (ImGui.Begin("LGDB Table of Contents", ref isOpen))
         {
             var toc = _dbFile!.TableOfContents;
-            var itemCount = (int)toc.ItemCount;
+            var itemCount = (int) toc.ItemCount;
+            var keys = toc.Items.Keys.ToArray();
             ImGui.Text($"Item count: {itemCount}");
             ImGui.BeginListBox("Items", ImGui.GetContentRegionAvail());
             for (int i = 0; i < itemCount; i++)
-            {
-                var item = toc.Items.Values.ElementAt(i);
-                ImGui.Selectable($"{item.Name}");
-            }
+                ImGui.Selectable($"{keys[i]}");
             ImGui.EndListBox();
             ImGui.End();
         }

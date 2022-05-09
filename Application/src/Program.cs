@@ -50,8 +50,8 @@ internal static class Program
 
             UI.ImGuiController.Begin();
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
-            // ImGui.ShowDemoWindow();
-            foreach (UI.UiLayer layer in uiLayers)
+            ImGui.ShowDemoWindow();
+            foreach (var layer in uiLayers)
                 layer.Render();
             UI.ImGuiController.End();
 

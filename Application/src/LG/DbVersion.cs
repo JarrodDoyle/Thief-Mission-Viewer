@@ -6,7 +6,7 @@ public struct DbVersion
 {
     public uint Major { get; }
     public uint Minor { get; }
-    
+
     public DbVersion(BinaryReader reader)
     {
         Major = reader.ReadUInt32();

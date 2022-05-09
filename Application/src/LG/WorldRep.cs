@@ -219,6 +219,7 @@ public struct WrCell
     public WrLightMapInfo[] PLightList { get; }
     public int LightIndicesCount { get; }
     public uint[] PLightIndices { get; }
+    public List<Vector4[,,]> Lightmaps { get; }
     public List<int> Triangles { get; }
 
     public WrCell(BinaryReader reader, bool extended, int lightmapFormat)
@@ -246,6 +247,8 @@ public struct WrCell
         PLightList = new WrLightMapInfo[Header.RenderPolyCount];
         for (int i = 0; i < Header.RenderPolyCount; i++)
             PLightList[i] = new WrLightMapInfo(reader);
+
+        Lightmaps = new List<Vector4[,,]>();
         for (int i = 0; i < Header.RenderPolyCount; i++)
         {
             // TODO: Actually handle lightmaps instead of leaving them as raw values
@@ -258,7 +261,35 @@ public struct WrCell
                 n >>= 1;
             }
 
-            reader.ReadBytes(count * (int) info.Width * (int) info.Height * lightmapFormat);
+            Vector4[,,] lightmap = new Vector4[count, info.Height, info.Width];
+            // var raw = reader.ReadBytes(count * (int) info.Width * (int) info.Height * lightmapFormat);
+            for (int c = 0; c < count; c++)
+            for (int y = 0; y < info.Height; y++)
+            for (int x = 0; x < info.Width; x++)
+            {
+                // TODO: rgb and rgba shift orders might be reversed
+                Vector4 lm = default;
+                uint raw = 0;
+                switch (lightmapFormat)
+                {
+                    case 1:
+                        raw = reader.ReadByte();
+                        lm = new Vector4(raw, raw, raw, 255) / 255;
+                        break;
+                    case 2:
+                        raw = BitConverter.ToUInt16(reader.ReadBytes(2));
+                        lm = new Vector4(raw & 31, (raw >> 5) & 31, (raw >> 10) & 31, 32f) / 32f;
+                        break;
+                    case 4:
+                        raw = BitConverter.ToUInt32(reader.ReadBytes(4));
+                        lm = new Vector4(raw & 255, (raw >> 8) & 255, (raw >> 16) & 255, (raw >> 24) & 255) / 255f;
+                        break;
+                }
+
+                lightmap[c, y, x] = lm;
+            }
+
+            Lightmaps.Add(lightmap);
         }
 
         LightIndicesCount = reader.ReadInt32();

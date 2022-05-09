@@ -7,7 +7,7 @@ public class DbChunk
     public DbChunkHeader Header { get; }
     public Byte[] Data { get; }
     public int DataSize { get; }
-    
+
     public DbChunk(BinaryReader reader, int dataSize)
     {
         Header = new DbChunkHeader(reader);
