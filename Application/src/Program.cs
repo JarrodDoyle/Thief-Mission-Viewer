@@ -8,7 +8,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -55,6 +55,7 @@ internal static class Program
                 layer.Render();
             UI.ImGuiController.End();
 
+            Raylib.DrawFPS(0, 0);
             Raylib.EndDrawing();
         }
 
