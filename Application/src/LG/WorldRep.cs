@@ -1,8 +1,5 @@
-using System.Collections;
 using System.Numerics;
 using System.Text;
-
-
 
 namespace RlImGuiApp.LG;
 
@@ -12,7 +9,6 @@ public class WorldRep
     public WrHeader Header { get; }
     public WrCell[] Cells { get; }
 
-
     public WorldRep(DbFile dbFile)
     {
         // TODO: Raise errors when the chunk isn't valid
@@ -20,7 +16,6 @@ public class WorldRep
 
         // TODO: Lightmap scaling and stuff
         var stream = new MemoryStream(Chunk.Data);
-        Console.WriteLine(stream.Length);
         var reader = new BinaryReader(stream, Encoding.UTF8, false);
         bool extended = Chunk.Header.Version.Minor == 30;
         Header = new WrHeader(reader, extended);
@@ -30,12 +25,8 @@ public class WorldRep
         if (Chunk.Header.Name == "WREXT" && Header.LightmapFormat != 0) lmFormat = 4;
 
         Cells = new WrCell[Header.CellCount];
-        Console.WriteLine($"{stream.Position}/{Chunk.DataSize}");
         for (int i = 0; i < Header.CellCount; i++)
-        {
             Cells[i] = new WrCell(reader, extended, lmFormat);
-            Console.WriteLine($"{stream.Position}/{Chunk.DataSize}");
-        }
         reader.Dispose();
     }
 
@@ -202,7 +193,7 @@ public struct WrPoly
     public uint Destination { get; }
     public uint MotionIndex { get; }
     public uint Padding { get; }
-    
+
     public WrPoly(BinaryReader reader)
     {
         Flags = reader.ReadByte();
@@ -265,8 +256,10 @@ public struct WrCell
                 if ((n & 1) == 1) count++;
                 n >>= 1;
             }
+
             reader.ReadBytes(count * (int) info.Width * (int) info.Height * lightmapFormat);
         }
+
         LightIndicesCount = reader.ReadInt32();
         PLightIndices = new uint[LightIndicesCount];
         for (int i = 0; i < LightIndicesCount; i++)
