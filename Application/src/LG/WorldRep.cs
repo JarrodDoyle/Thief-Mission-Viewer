@@ -219,13 +219,14 @@ public struct WrCell
     public WrLightMapInfo[] PLightList { get; }
     public int LightIndicesCount { get; }
     public uint[] PLightIndices { get; }
+    public List<int> Triangles { get; }
 
     public WrCell(BinaryReader reader, bool extended, int lightmapFormat)
     {
         Header = new WrCellHeader(reader);
         PVertices = new Vector3[Header.VertexCount];
         for (int i = 0; i < Header.VertexCount; i++)
-            PVertices[i] = new Vector3 {X = reader.ReadSingle(), Y = reader.ReadSingle(), Z = reader.ReadSingle()};
+            PVertices[i] = new Vector3 {X = -reader.ReadSingle(), Z = reader.ReadSingle(), Y = reader.ReadSingle()};
         PPolys = new WrPoly[Header.PolyCount];
         for (int i = 0; i < Header.PolyCount; i++)
             PPolys[i] = new WrPoly(reader);
@@ -264,5 +265,31 @@ public struct WrCell
         PLightIndices = new uint[LightIndicesCount];
         for (int i = 0; i < LightIndicesCount; i++)
             PLightIndices[i] = reader.ReadUInt16();
+
+        // Precalc visible poly triangles
+        var numPolys = Header.PolyCount;
+        var numRenderPolys = Header.RenderPolyCount;
+        var numPortalPolys = Header.PortalPolyCount;
+        var idxOffset = 0;
+        Triangles = new List<int>();
+        for (int i = 0; i < numPolys; i++)
+        {
+            var poly = PPolys[i];
+            if (i >= numRenderPolys || i >= numPolys - numPortalPolys)
+            {
+                idxOffset += (int) poly.VertexCount;
+                continue;
+            }
+
+            var numPolyVertices = poly.VertexCount;
+            for (int k = 1; k < numPolyVertices - 1; k++)
+            {
+                Triangles.Add((int) PIndexList[idxOffset]);
+                Triangles.Add((int) PIndexList[idxOffset + k]);
+                Triangles.Add((int) PIndexList[idxOffset + k + 1]);
+            }
+
+            idxOffset += (int) poly.VertexCount;
+        }
     }
 }

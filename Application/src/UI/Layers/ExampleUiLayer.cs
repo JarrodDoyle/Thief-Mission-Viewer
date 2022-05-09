@@ -1,5 +1,7 @@
+using System.Numerics;
 using ImGuiNET;
 using RlImGuiApp.LG;
+using RlImGuiApp.Model;
 
 namespace RlImGuiApp.UI.Layers;
 
@@ -7,6 +9,7 @@ public class ExampleUiLayer : UiLayer
 {
     private DbFile? _dbFile;
     private WorldRep? _worldRep;
+    public WorldRepMesh? WorldRepMesh;
 
     public override void Attach()
     {
@@ -14,6 +17,7 @@ public class ExampleUiLayer : UiLayer
 
         _dbFile = new DbFile("../../../../Data/miss1.mis");
         _worldRep = new WorldRep(_dbFile);
+        WorldRepMesh = new WorldRepMesh(_worldRep);
     }
 
     public override void Detach()
@@ -55,8 +59,6 @@ public class ExampleUiLayer : UiLayer
             ImGui.Text($"Version: {_worldRep?.Chunk?.Header.Version}");
             ImGui.Text($"Cell count: {_worldRep?.Header.CellCount}");
             ImGui.Text($"Data size: {_worldRep?.Header.DataSize}");
-            ImGui.Text($"{_worldRep?.Header.LightmapFormat}");
-            ImGui.Text($"{_worldRep?.Header.LightmapScale}");
             ImGui.End();
         }
 
