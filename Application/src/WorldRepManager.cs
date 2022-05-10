@@ -19,7 +19,7 @@ public static class WorldRepManager
     public static void LoadFile(int index)
     {
         // TODO: Need to dispose of any currently loaded resources
-        if (index < 0 || index >= Files.Length) return;
+        if (index < 0 || index >= Files.Length || index == SelectedFile) return;
         var file = Files[index];
         var t0 = DateTime.Now;
         DbFile = new LG.DbFile(file.FullName);
@@ -29,7 +29,7 @@ public static class WorldRepManager
         _worldRepMesh = new Model.WorldRepMesh(WorldRep);
         var t3 = DateTime.Now;
         SelectedFile = index;
-        
+
         Console.WriteLine($"File Load: {t1 - t0}");
         Console.WriteLine($"WR Load: {t2 - t1}");
         Console.WriteLine($"WR Mesh Build: {t3 - t2}");
