@@ -36,7 +36,7 @@ public class DbFile
     }
 }
 
-public struct DbFileHeader
+public readonly struct DbFileHeader
 {
     public uint TocOffset { get; }
     public DbVersion Version { get; }
@@ -51,7 +51,7 @@ public struct DbFileHeader
     }
 }
 
-public struct DbToc
+public readonly struct DbToc
 {
     public uint ItemCount { get; }
     public Dictionary<string, DbTocEntry> Items { get; }
@@ -68,7 +68,7 @@ public struct DbToc
     }
 }
 
-public struct DbTocEntry
+public readonly struct DbTocEntry
 {
     public string Name { get; }
     public uint Offset { get; }

@@ -16,7 +16,7 @@ public class DbChunk
     }
 }
 
-public struct DbChunkHeader
+public readonly struct DbChunkHeader
 {
     public string Name { get; }
     public DbVersion Version { get; }

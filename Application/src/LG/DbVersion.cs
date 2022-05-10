@@ -1,8 +1,6 @@
-using System.Text;
-
 namespace RlImGuiApp.LG;
 
-public struct DbVersion
+public readonly struct DbVersion
 {
     public uint Major { get; }
     public uint Minor { get; }

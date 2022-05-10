@@ -50,7 +50,7 @@ public class WorldRep
     }
 }
 
-public struct WrHeader
+public readonly struct WrHeader
 {
     public uint LightmapFormat { get; }
     public int LightmapScale { get; }
@@ -77,7 +77,7 @@ public struct WrHeader
     }
 }
 
-public struct WrCellHeader
+public readonly struct WrCellHeader
 {
     public uint VertexCount { get; }
     public uint PolyCount { get; }
@@ -111,7 +111,7 @@ public struct WrCellHeader
     }
 }
 
-public struct WrRenderPoly
+public readonly struct WrRenderPoly
 {
     public Vector3 TexU { get; }
     public Vector3 TexV { get; }
@@ -148,7 +148,7 @@ public struct WrRenderPoly
     }
 }
 
-public struct WrPlane
+public readonly struct WrPlane
 {
     public Vector3 Normal { get; }
     public float Distance { get; }
@@ -160,7 +160,7 @@ public struct WrPlane
     }
 }
 
-public struct WrLightMapInfo
+public readonly struct WrLightMapInfo
 {
     public int BaseU { get; }
     public int BaseV { get; }
@@ -184,7 +184,7 @@ public struct WrLightMapInfo
     }
 }
 
-public struct WrPoly
+public readonly struct WrPoly
 {
     public uint Flags { get; }
     public uint VertexCount { get; }
@@ -206,7 +206,7 @@ public struct WrPoly
     }
 }
 
-public struct WrCell
+public readonly struct WrCell
 {
     public WrCellHeader Header { get; }
     public Vector3[] PVertices { get; }
