@@ -18,6 +18,7 @@ public static class WorldRepManager
 
     public static void LoadFile(int index)
     {
+        // TODO: Need to dispose of any currently loaded resources
         if (index < 0 || index >= Files.Length) return;
         var file = Files[index];
         var t0 = DateTime.Now;

@@ -7,7 +7,6 @@ namespace RlImGuiApp.UI.Layers;
 
 public class ExampleUiLayer : UiLayer
 {
-
     public override void Attach()
     {
         Console.WriteLine("Attached layer");
@@ -65,6 +64,7 @@ public class ExampleUiLayer : UiLayer
                 if (isSelected)
                     ImGui.SetItemDefaultFocus();
             }
+
             ImGui.EndListBox();
             ImGui.End();
         }

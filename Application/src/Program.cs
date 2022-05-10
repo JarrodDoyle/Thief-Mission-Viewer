@@ -36,17 +36,16 @@ internal static class Program
 
         while (!Raylib.WindowShouldClose())
         {
-            Raylib.UpdateCamera(ref camera);
-
-            foreach (UI.UiLayer layer in uiLayers)
-                layer.Update();
-
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.BLACK);
+            Raylib.UpdateCamera(ref camera);
 
             Raylib.BeginMode3D(camera);
             WorldRepManager.Render();
             Raylib.EndMode3D();
+            
+            foreach (UI.UiLayer layer in uiLayers)
+                layer.Update();
 
             UI.ImGuiController.Begin();
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);

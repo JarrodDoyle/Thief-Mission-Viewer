@@ -251,7 +251,6 @@ public struct WrCell
         Lightmaps = new List<Vector4[,,]>();
         for (int i = 0; i < Header.RenderPolyCount; i++)
         {
-            // TODO: Actually handle lightmaps instead of leaving them as raw values
             var info = PLightList[i];
             var count = 1; // 1 base lightmap plus 1 per animlight
             var n = info.AnimLightBitmask;
@@ -262,7 +261,6 @@ public struct WrCell
             }
 
             Vector4[,,] lightmap = new Vector4[count, info.Height, info.Width];
-            // var raw = reader.ReadBytes(count * (int) info.Width * (int) info.Height * lightmapFormat);
             for (int c = 0; c < count; c++)
             for (int y = 0; y < info.Height; y++)
             for (int x = 0; x < info.Width; x++)
