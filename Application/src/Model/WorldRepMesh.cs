@@ -8,8 +8,6 @@ public class WorldRepMesh
 
     public WorldRepMesh(LG.WorldRep worldRep)
     {
-        var start = DateTime.Now;
-        
         var rnd = new Random();
         var models = new List<Raylib_cs.Model>();
         var numCells = worldRep.Cells.Length;
@@ -70,9 +68,6 @@ public class WorldRepMesh
         }
 
         Models = models.ToArray();
-
-        var end = DateTime.Now;
-        Console.WriteLine(end-start);
     }
 
     public void Render()

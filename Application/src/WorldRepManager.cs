@@ -20,10 +20,19 @@ public static class WorldRepManager
     {
         if (index < 0 || index >= Files.Length) return;
         var file = Files[index];
+        var t0 = DateTime.Now;
         DbFile = new LG.DbFile(file.FullName);
+        var t1 = DateTime.Now;
         WorldRep = new LG.WorldRep(DbFile);
+        var t2 = DateTime.Now;
         _worldRepMesh = new Model.WorldRepMesh(WorldRep);
+        var t3 = DateTime.Now;
         SelectedFile = index;
+        
+        Console.WriteLine($"File Load: {t1 - t0}");
+        Console.WriteLine($"WR Load: {t2 - t1}");
+        Console.WriteLine($"WR Mesh Build: {t3 - t2}");
+        Console.WriteLine($"Total: {t3 - t0}");
     }
 
     public static void Render()
