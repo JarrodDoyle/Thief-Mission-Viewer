@@ -57,6 +57,7 @@ public class WorldRepMesh
 
             Raylib.UploadMesh(ref mesh, false);
             var model = Raylib.LoadModelFromMesh(mesh);
+            // Raylib.SetMaterialTexture(ref model, 0, MaterialMapIndex.MATERIAL_MAP_DIFFUSE, ref lmRenderTexture.texture);
             models.Add(model);
         }
 
@@ -67,7 +68,10 @@ public class WorldRepMesh
     public void Render()
     {
         foreach (var t in Models)
+        {
             Raylib.DrawModel(t, Vector3.Zero, 1, Color.WHITE);
+            Raylib.DrawModelWires(t, Vector3.Zero, 1, Color.BLACK);
+        }
     }
 
     public void ExportLightmaps(string dirPath)
@@ -124,6 +128,8 @@ public class WorldRepMesh
         var rnd = new Random();
         var numVertices = cell.PVertices.Length;
         colours = new byte[numVertices * 4];
+        // for (var i = 0; i < numVertices * 4; i++)
+        //     colours[i] = 255;
         for (var i = 0; i < numVertices; i++)
         {
             var idx = i * 4;
