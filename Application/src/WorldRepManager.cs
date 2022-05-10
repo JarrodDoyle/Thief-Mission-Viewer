@@ -11,7 +11,7 @@ public static class WorldRepManager
 
     static WorldRepManager()
     {
-        DataDir = "../../../../Data/";
+        DataDir = "../../../../Data";
         Files = new DirectoryInfo(DataDir).GetFiles();
         SelectedFile = -1;
     }
@@ -39,5 +39,10 @@ public static class WorldRepManager
     public static void Render()
     {
         _worldRepMesh?.Render();
+    }
+
+    public static void ExportLightmaps()
+    {
+        _worldRepMesh?.ExportLightmaps(DataDir);
     }
 }

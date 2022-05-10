@@ -49,6 +49,13 @@ public class ExampleUiLayer : UiLayer
             ImGui.Text($"Version: {WorldRepManager.WorldRep?.Chunk?.Header.Version}");
             ImGui.Text($"Cell count: {WorldRepManager.WorldRep?.Header.CellCount}");
             ImGui.Text($"Data size: {WorldRepManager.WorldRep?.Header.DataSize}");
+            if (ImGui.Button("Export Lightmaps"))
+            {
+                var t0 = DateTime.Now;
+                WorldRepManager.ExportLightmaps();
+                Console.WriteLine($"Lm export time: {DateTime.Now - t0}");
+            }
+
             ImGui.End();
         }
 

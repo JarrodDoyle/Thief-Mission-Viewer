@@ -267,20 +267,20 @@ public readonly struct WrCell
             {
                 // TODO: rgb and rgba shift orders might be reversed
                 Vector4 lm = default;
-                uint raw = 0;
+                uint raw;
                 switch (lightmapFormat)
                 {
                     case 1:
                         raw = reader.ReadByte();
-                        lm = new Vector4(raw, raw, raw, 255) / 255;
+                        lm = new Vector4(raw, raw, raw, 255);
                         break;
                     case 2:
                         raw = BitConverter.ToUInt16(reader.ReadBytes(2));
-                        lm = new Vector4(raw & 31, (raw >> 5) & 31, (raw >> 10) & 31, 32f) / 32f;
+                        lm = new Vector4(raw & 31, (raw >> 5) & 31, (raw >> 10) & 31, 32f) * 255 / 32;
                         break;
                     case 4:
                         raw = BitConverter.ToUInt32(reader.ReadBytes(4));
-                        lm = new Vector4(raw & 255, (raw >> 8) & 255, (raw >> 16) & 255, (raw >> 24) & 255) / 255f;
+                        lm = new Vector4(raw & 255, (raw >> 8) & 255, (raw >> 16) & 255, (raw >> 24) & 255);
                         break;
                 }
 
