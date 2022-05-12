@@ -26,33 +26,8 @@ public class WorldRepMesh
             BuildCellIndices(cell, out var indices);
             BuildCellVertexColours(cell, out var colours);
             BuildMesh(vertices, indices, colours, out var mesh);
+            BuildLightmap(cell, out var lmRenderTexture, out var packingRects);
 
-            var numRects = cell.Header.RenderPolyCount;
-            var packingRects = new PackingRectangle[numRects];
-            for (int j = 0; j < numRects; j++)
-            {
-                var info = cell.PLightList[j];
-                packingRects[j] = new PackingRectangle(0, 0, info.Width, info.Height);
-            }
-
-            RectanglePacker.Pack(packingRects, out var bounds);
-            var lmRenderTexture = Raylib.LoadRenderTexture((int) bounds.Width, (int) bounds.Height);
-            Raylib.BeginTextureMode(lmRenderTexture);
-            Raylib.ClearBackground(Color.PURPLE);
-            for (var j = 0; j < numRects; j++)
-            {
-                var rect = packingRects[j];
-                var lightmap = cell.Lightmaps[j];
-                for (var y = 0; y < lightmap.GetLength(1); y++)
-                for (var x = 0; x < lightmap.GetLength(2); x++)
-                {
-                    var c = lightmap[0, y, x];
-                    Raylib.DrawPixel((int) rect.X + x, (int) rect.Y + y,
-                        new Color((int) c.X, (int) c.Y, (int) c.Z, (int) c.W));
-                }
-            }
-
-            Raylib.EndTextureMode();
             lmTextures.Add(lmRenderTexture);
 
             Raylib.UploadMesh(ref mesh, false);
@@ -138,5 +113,35 @@ public class WorldRepMesh
             colours[idx + 2] = (byte) rnd.Next(100, 255);
             colours[idx + 3] = 255;
         }
+    }
+
+    private static void BuildLightmap(LG.WrCell cell, out RenderTexture2D texture, out PackingRectangle[] rects)
+    {
+        var numRects = cell.Header.RenderPolyCount;
+        rects = new PackingRectangle[numRects];
+        for (var i = 0; i < numRects; i++)
+        {
+            var light = cell.PLightList[i];
+            rects[i] = new PackingRectangle(0, 0, light.Width, light.Height);
+        }
+
+        RectanglePacker.Pack(rects, out var bounds);
+        texture = Raylib.LoadRenderTexture((int) bounds.Width, (int) bounds.Height);
+        Raylib.BeginTextureMode(texture);
+        Raylib.ClearBackground(Color.PURPLE);
+        for (var i = 0; i < numRects; i++)
+        {
+            var rect = rects[i];
+            var lightmap = cell.Lightmaps[i];
+            for (var y = 0; y < lightmap.GetLength(1); y++)
+            for (var x = 0; x < lightmap.GetLength(2); x++)
+            {
+                var c = lightmap[0, y, x];
+                Raylib.DrawPixel((int) rect.X + x, (int) rect.Y + y,
+                    new Color((int) c.X, (int) c.Y, (int) c.Z, (int) c.W));
+            }
+        }
+
+        Raylib.EndTextureMode();
     }
 }
