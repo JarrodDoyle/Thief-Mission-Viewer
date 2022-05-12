@@ -81,10 +81,9 @@ public class WorldRepMesh
         {
             var v = cell.PVertices[i];
             var idx = i * 3;
-            // Reverse winding-order
-            vertices[idx + 2] = v.X;
+            vertices[idx + 0] = v.X;
             vertices[idx + 1] = v.Y;
-            vertices[idx + 0] = v.Z;
+            vertices[idx + 2] = v.Z;
         }
     }
 

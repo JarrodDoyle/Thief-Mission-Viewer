@@ -313,9 +313,10 @@ public readonly struct WrCell
             var numPolyVertices = poly.VertexCount;
             for (int k = 1; k < numPolyVertices - 1; k++)
             {
-                Triangles.Add((int) PIndexList[idxOffset]);
-                Triangles.Add((int) PIndexList[idxOffset + k]);
+                // Reverse winding-order
                 Triangles.Add((int) PIndexList[idxOffset + k + 1]);
+                Triangles.Add((int) PIndexList[idxOffset + k]);
+                Triangles.Add((int) PIndexList[idxOffset]);
             }
 
             idxOffset += (int) poly.VertexCount;
