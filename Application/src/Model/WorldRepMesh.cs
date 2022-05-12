@@ -121,23 +121,22 @@ public class WorldRepMesh
         for (var i = 0; i < numRects; i++)
         {
             var light = cell.PLightList[i];
-            rects[i] = new PackingRectangle(0, 0, light.Width, light.Height);
+            rects[i] = new PackingRectangle(0, 0, light.Width, light.Height, i);
         }
 
         RectanglePacker.Pack(rects, out var bounds);
         texture = Raylib.LoadRenderTexture((int) bounds.Width, (int) bounds.Height);
         Raylib.BeginTextureMode(texture);
         Raylib.ClearBackground(Color.PURPLE);
-        for (var i = 0; i < numRects; i++)
+        foreach (var rect in rects)
         {
-            var rect = rects[i];
-            var lightmap = cell.Lightmaps[i];
+            var lightmap = cell.Lightmaps[rect.Id];
             for (var y = 0; y < lightmap.GetLength(1); y++)
             for (var x = 0; x < lightmap.GetLength(2); x++)
             {
-                var c = lightmap[0, y, x];
-                Raylib.DrawPixel((int) rect.X + x, (int) rect.Y + y,
-                    new Color((int) c.X, (int) c.Y, (int) c.Z, (int) c.W));
+                var values = lightmap[0, y, x];
+                var colour = new Color((int) values.X, (int) values.Y, (int) values.Z, (int) values.W);
+                Raylib.DrawPixel((int) rect.X + x, (int) rect.Y + y, colour);
             }
         }
 
