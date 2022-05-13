@@ -24,15 +24,16 @@ public class WorldRepMesh
 
             BuildCellVertices(cell, out var vertices);
             BuildCellIndices(cell, out var indices);
+            BuildLightmap(cell, out var lmRenderTexture, out var packingRects, out var bounds);
+            BuildUvs(cell, packingRects, bounds, out var uvs);
             BuildCellVertexColours(cell, out var colours);
-            BuildMesh(vertices, indices, colours, out var mesh);
-            BuildLightmap(cell, out var lmRenderTexture, out var packingRects);
+            BuildMesh(vertices, indices, colours, uvs, out var mesh);
 
             lmTextures.Add(lmRenderTexture);
 
             Raylib.UploadMesh(ref mesh, false);
             var model = Raylib.LoadModelFromMesh(mesh);
-            // Raylib.SetMaterialTexture(ref model, 0, MaterialMapIndex.MATERIAL_MAP_DIFFUSE, ref lmRenderTexture.texture);
+            Raylib.SetMaterialTexture(ref model, 0, MaterialMapIndex.MATERIAL_MAP_DIFFUSE, ref lmRenderTexture.texture);
             models.Add(model);
         }
 
@@ -58,17 +59,116 @@ public class WorldRepMesh
         }
     }
 
-    private static void BuildMesh(float[] vertices, ushort[] indices, byte[] colours, out Mesh mesh)
+    private static void BuildMesh(float[] vertices, ushort[] indices, byte[] colours, float[] uvs, out Mesh mesh)
     {
         mesh = new Mesh {vertexCount = vertices.Length / 3, triangleCount = indices.Length / 3};
         unsafe
         {
-            fixed (float* verticesPtr = vertices)
-                mesh.vertices = verticesPtr;
-            fixed (byte* colorsPtr = colours)
-                mesh.colors = colorsPtr;
-            fixed (ushort* indicesPtr = indices)
-                mesh.indices = indicesPtr;
+            fixed (float* verticesPtr = vertices) mesh.vertices = verticesPtr;
+            fixed (byte* colorsPtr = colours) mesh.colors = colorsPtr;
+            fixed (ushort* indicesPtr = indices) mesh.indices = indicesPtr;
+            fixed (float* uvsPtr = uvs) mesh.texcoords = uvsPtr;
+        }
+    }
+
+    private static void BuildUvs(LG.WrCell cell, PackingRectangle[] rects, PackingRectangle bounds, out float[] lmUvs)
+    {
+        // TODO: UVs are wrong bruhh
+        var numRenderPolys = cell.Header.RenderPolyCount;
+        var portalStartIdx = cell.Header.PolyCount - cell.Header.PortalPolyCount;
+        var idxOffset = 0;
+        var lmUvList = new List<Vector2>();
+        for (var i = 0; i < numRenderPolys; i++)
+        {
+            var poly = cell.PPolys[i];
+
+            if (i >= portalStartIdx)
+            {
+                idxOffset += (int) poly.VertexCount;
+                continue;
+            }
+
+            var renderPoly = cell.PRenderPolys[i];
+            var light = cell.PLightList[i];
+            var uu = Vector3.Dot(renderPoly.TexU, renderPoly.TexU);
+            var vv = Vector3.Dot(renderPoly.TexV, renderPoly.TexV);
+            var uv = Vector3.Dot(renderPoly.TexU, renderPoly.TexV);
+            var lmUScale = 4.0f / light.Width;
+            var lmVScale = 4.0f / light.Height;
+
+            // TODO: Support newdark (requires some importer changes)
+            var renderUBase = renderPoly.BaseU / (16 * 256);
+            var renderVBase = renderPoly.BaseV / (16 * 256);
+            var lmUBase = lmUScale * (renderUBase + (0.5f - light.BaseU) / 4);
+            var lmVBase = lmVScale * (renderVBase + (0.5f - light.BaseV) / 4);
+            var anchor = cell.PVertices[cell.PIndexList[idxOffset + renderPoly.TextureAnchor]];
+
+            var numVertices = (int) poly.VertexCount;
+            if (uv == 0.0)
+            {
+                var lmUVec = renderPoly.TexU * lmUScale / uu;
+                var lmVVec = renderPoly.TexV * lmVScale / vv;
+
+                for (var j = numVertices - 1; j >= 0; j--)
+                {
+                    var vertex = cell.PVertices[cell.PIndexList[idxOffset + j]];
+                    var delta = vertex - anchor;
+                    var lmU = Vector3.Dot(delta, lmUVec) + lmUBase;
+                    var lmV = Vector3.Dot(delta, lmVVec) + lmVBase;
+                    // TODO: Might need to reverse uv (1 - uv)
+                    lmUvList.Add(new Vector2(lmU, lmV));
+                }
+            }
+            else
+            {
+                var denom = 1 / (uu * vv - uv * uv);
+                var lmUu = uu * lmVScale * denom;
+                var lmVv = vv * lmUScale * denom;
+                var lmUvu = lmUScale * denom * uv;
+                var lmUvv = lmVScale * denom * uv;
+
+                for (var j = numVertices - 1; j >= 0; j--)
+                {
+                    var vertex = cell.PVertices[cell.PIndexList[idxOffset + j]];
+                    var delta = vertex - anchor;
+                    var du = Vector3.Dot(delta, renderPoly.TexU);
+                    var dv = Vector3.Dot(delta, renderPoly.TexV);
+                    var lmU = lmUBase + lmVv * du - lmUvu * dv;
+                    var lmV = lmVBase + lmUu * dv - lmUvv * du;
+                    // TODO: Might need to reverse uv (1 - uv)
+                    lmUvList.Add(new Vector2(lmU, lmV));
+                }
+            }
+
+            idxOffset += (int) poly.VertexCount;
+        }
+
+        // Transform UVs to lightmap texture space
+        var lmUvVecs = lmUvList.ToArray();
+        foreach (var rect in rects)
+        {
+            var lmUv = lmUvVecs[rect.Id];
+
+            // Clamp uv range to [0..1]
+            lmUv.X %= 1;
+            lmUv.Y %= 1;
+            if (lmUv.X < 0) lmUv.X += 1;
+            if (lmUv.Y < 0) lmUv.Y += 1;
+
+            // Transform!
+            lmUv.X = (rect.X + rect.Width * lmUv.X) / (int) bounds.Width;
+            lmUv.Y = (rect.Y + rect.Height * lmUv.Y) / (int) bounds.Height;
+            lmUvVecs[rect.Id] = lmUv;
+        }
+
+        // Output the UVs as a float array
+        lmUvs = new float[lmUvList.Count * 2];
+        var idx = 0;
+        foreach (var uv in lmUvVecs)
+        {
+            lmUvs[idx] = uv.X;
+            lmUvs[idx + 1] = uv.Y;
+            idx += 2;
         }
     }
 
@@ -99,22 +199,23 @@ public class WorldRepMesh
     private static void BuildCellVertexColours(LG.WrCell cell, out byte[] colours)
     {
         // Build some debug vertex colours
-        var rnd = new Random();
         var numVertices = cell.PVertices.Length;
         colours = new byte[numVertices * 4];
-        // for (var i = 0; i < numVertices * 4; i++)
-        //     colours[i] = 255;
-        for (var i = 0; i < numVertices; i++)
-        {
-            var idx = i * 4;
-            colours[idx] = (byte) rnd.Next(100, 255);
-            colours[idx + 1] = (byte) rnd.Next(100, 255);
-            colours[idx + 2] = (byte) rnd.Next(100, 255);
-            colours[idx + 3] = 255;
-        }
+        for (var i = 0; i < numVertices * 4; i++)
+            colours[i] = 255;
+        // var rnd = new Random();
+        // for (var i = 0; i < numVertices; i++)
+        // {
+        //     var idx = i * 4;
+        //     colours[idx] = (byte) rnd.Next(100, 255);
+        //     colours[idx + 1] = (byte) rnd.Next(100, 255);
+        //     colours[idx + 2] = (byte) rnd.Next(100, 255);
+        //     colours[idx + 3] = 255;
+        // }
     }
 
-    private static void BuildLightmap(LG.WrCell cell, out RenderTexture2D texture, out PackingRectangle[] rects)
+    private static void BuildLightmap(LG.WrCell cell, out RenderTexture2D texture, out PackingRectangle[] rects,
+        out PackingRectangle bounds)
     {
         var numRects = cell.Header.RenderPolyCount;
         rects = new PackingRectangle[numRects];
@@ -124,7 +225,7 @@ public class WorldRepMesh
             rects[i] = new PackingRectangle(0, 0, light.Width, light.Height, i);
         }
 
-        RectanglePacker.Pack(rects, out var bounds);
+        RectanglePacker.Pack(rects, out bounds);
         texture = Raylib.LoadRenderTexture((int) bounds.Width, (int) bounds.Height);
         Raylib.BeginTextureMode(texture);
         Raylib.ClearBackground(Color.PURPLE);
