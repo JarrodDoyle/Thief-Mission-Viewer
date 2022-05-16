@@ -41,24 +41,6 @@ public class WorldRepMesh
         LmTextures = lmTextures.ToArray();
     }
 
-    public void Render()
-    {
-        foreach (var t in Models)
-        {
-            Raylib.DrawModel(t, Vector3.Zero, 1, Color.WHITE);
-            Raylib.DrawModelWires(t, Vector3.Zero, 1, Color.BLACK);
-        }
-    }
-
-    public void ExportLightmaps(string dirPath)
-    {
-        for (var i = 0; i < LmTextures.Length; i++)
-        {
-            var filePath = $"{dirPath}/Outputs/lm-{i}.png";
-            Raylib.ExportImage(Raylib.LoadImageFromTexture(LmTextures[i].texture), filePath);
-        }
-    }
-
     private static void BuildMesh(float[] vertices, ushort[] indices, byte[] colours, float[] uvs, out Mesh mesh)
     {
         mesh = new Mesh {vertexCount = vertices.Length / 3, triangleCount = indices.Length / 3};
@@ -76,12 +58,13 @@ public class WorldRepMesh
         // TODO: UVs are wrong bruhh
         var numRenderPolys = cell.Header.RenderPolyCount;
         var portalStartIdx = cell.Header.PolyCount - cell.Header.PortalPolyCount;
-        var idxOffset = 0;
+        
         var lmUvList = new List<Vector2>();
+        var idToIdxMap = new List<int[]>();
+        var idxOffset = 0;
         for (var i = 0; i < numRenderPolys; i++)
         {
             var poly = cell.PPolys[i];
-
             if (i >= portalStartIdx)
             {
                 idxOffset += (int) poly.VertexCount;
@@ -104,6 +87,8 @@ public class WorldRepMesh
             var anchor = cell.PVertices[cell.PIndexList[idxOffset + renderPoly.TextureAnchor]];
 
             var numVertices = (int) poly.VertexCount;
+            var uvIdx = new int[numVertices];
+            // TODO: Might need to reverse uv (1 - uv)
             if (uv == 0.0)
             {
                 var lmUVec = renderPoly.TexU * lmUScale / uu;
@@ -111,11 +96,10 @@ public class WorldRepMesh
 
                 for (var j = numVertices - 1; j >= 0; j--)
                 {
-                    var vertex = cell.PVertices[cell.PIndexList[idxOffset + j]];
-                    var delta = vertex - anchor;
+                    var delta = cell.PVertices[cell.PIndexList[idxOffset + j]] - anchor;
                     var lmU = Vector3.Dot(delta, lmUVec) + lmUBase;
                     var lmV = Vector3.Dot(delta, lmVVec) + lmVBase;
-                    // TODO: Might need to reverse uv (1 - uv)
+                    uvIdx[j] = lmUvList.Count;
                     lmUvList.Add(new Vector2(lmU, lmV));
                 }
             }
@@ -129,37 +113,23 @@ public class WorldRepMesh
 
                 for (var j = numVertices - 1; j >= 0; j--)
                 {
-                    var vertex = cell.PVertices[cell.PIndexList[idxOffset + j]];
-                    var delta = vertex - anchor;
+                    var delta = cell.PVertices[cell.PIndexList[idxOffset + j]] - anchor;
                     var du = Vector3.Dot(delta, renderPoly.TexU);
                     var dv = Vector3.Dot(delta, renderPoly.TexV);
                     var lmU = lmUBase + lmVv * du - lmUvu * dv;
                     var lmV = lmVBase + lmUu * dv - lmUvv * du;
-                    // TODO: Might need to reverse uv (1 - uv)
+                    uvIdx[j] = lmUvList.Count;
                     lmUvList.Add(new Vector2(lmU, lmV));
                 }
             }
 
+            idToIdxMap.Add(uvIdx);
             idxOffset += (int) poly.VertexCount;
         }
 
         // Transform UVs to lightmap texture space
         var lmUvVecs = lmUvList.ToArray();
-        foreach (var rect in rects)
-        {
-            var lmUv = lmUvVecs[rect.Id];
-
-            // Clamp uv range to [0..1]
-            lmUv.X %= 1;
-            lmUv.Y %= 1;
-            if (lmUv.X < 0) lmUv.X += 1;
-            if (lmUv.Y < 0) lmUv.Y += 1;
-
-            // Transform!
-            lmUv.X = (rect.X + rect.Width * lmUv.X) / (int) bounds.Width;
-            lmUv.Y = (rect.Y + rect.Height * lmUv.Y) / (int) bounds.Height;
-            lmUvVecs[rect.Id] = lmUv;
-        }
+        TransformUvs(rects, bounds, idToIdxMap.ToArray(), portalStartIdx, ref lmUvVecs);
 
         // Output the UVs as a float array
         lmUvs = new float[lmUvList.Count * 2];
@@ -169,6 +139,32 @@ public class WorldRepMesh
             lmUvs[idx] = uv.X;
             lmUvs[idx + 1] = uv.Y;
             idx += 2;
+        }
+    }
+
+    private static void TransformUvs(PackingRectangle[] rects, PackingRectangle bounds, int[][] uvIdxs,
+        uint portalStartIdx, ref Vector2[] uvs)
+    {
+        foreach (var rect in rects)
+        {
+            if (rect.Id >= portalStartIdx) continue;
+
+            var lmUvIdxs = uvIdxs[rect.Id];
+            foreach (var idx in lmUvIdxs)
+            {
+                var lmUv = uvs[idx];
+
+                // Clamp uv range to [0..1]
+                lmUv.X %= 1;
+                lmUv.Y %= 1;
+                if (lmUv.X < 0) lmUv.X = Math.Abs(lmUv.X);
+                if (lmUv.Y < 0) lmUv.Y = Math.Abs(lmUv.Y);
+
+                // Transform!
+                lmUv.X = (rect.X + rect.Width * lmUv.X) / (int) bounds.Width;
+                lmUv.Y = (rect.Y + rect.Height * lmUv.Y) / (int) bounds.Height;
+                uvs[idx] = lmUv;
+            }
         }
     }
 
@@ -203,15 +199,6 @@ public class WorldRepMesh
         colours = new byte[numVertices * 4];
         for (var i = 0; i < numVertices * 4; i++)
             colours[i] = 255;
-        // var rnd = new Random();
-        // for (var i = 0; i < numVertices; i++)
-        // {
-        //     var idx = i * 4;
-        //     colours[idx] = (byte) rnd.Next(100, 255);
-        //     colours[idx + 1] = (byte) rnd.Next(100, 255);
-        //     colours[idx + 2] = (byte) rnd.Next(100, 255);
-        //     colours[idx + 3] = 255;
-        // }
     }
 
     private static void BuildLightmap(LG.WrCell cell, out RenderTexture2D texture, out PackingRectangle[] rects,
@@ -242,5 +229,23 @@ public class WorldRepMesh
         }
 
         Raylib.EndTextureMode();
+    }
+    
+    public void Render()
+    {
+        foreach (var t in Models)
+        {
+            Raylib.DrawModel(t, Vector3.Zero, 1, Color.WHITE);
+            Raylib.DrawModelWires(t, Vector3.Zero, 1, Color.BLACK);
+        }
+    }
+
+    public void ExportLightmaps(string dirPath)
+    {
+        for (var i = 0; i < LmTextures.Length; i++)
+        {
+            var filePath = $"{dirPath}/Outputs/lm-{i}.png";
+            Raylib.ExportImage(Raylib.LoadImageFromTexture(LmTextures[i].texture), filePath);
+        }
     }
 }
