@@ -102,7 +102,7 @@ public class WorldRepMesh
             for (var i = 0; i < polyVertCount; i++)
             {
                 uvIdx[i] = lmUvList.Count / 2;
-                
+
                 var delta = cell.PVertices[cell.PIndexList[idxOffset + i]] - anchor;
                 lmUvList.Add(Vector3.Dot(delta, lmUVec) + lmUBase);
                 lmUvList.Add(Vector3.Dot(delta, lmVVec) + lmVBase);
@@ -115,11 +115,11 @@ public class WorldRepMesh
             var lmVv = vv * lmUScale * denom;
             var lmUvu = lmUScale * denom * uv;
             var lmUvv = lmVScale * denom * uv;
-            for (var k = 0; k < polyVertCount; k++)
+            for (var i = 0; i < polyVertCount; i++)
             {
-                uvIdx[k] = lmUvList.Count / 2;
+                uvIdx[i] = lmUvList.Count / 2;
 
-                var delta = cell.PVertices[cell.PIndexList[idxOffset + k]] - anchor;
+                var delta = cell.PVertices[cell.PIndexList[idxOffset + i]] - anchor;
                 var du = Vector3.Dot(delta, renderPoly.TexU);
                 var dv = Vector3.Dot(delta, renderPoly.TexV);
                 lmUvList.Add(lmUBase + lmVv * du - lmUvu * dv);
