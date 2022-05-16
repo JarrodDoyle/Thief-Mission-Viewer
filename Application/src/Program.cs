@@ -54,7 +54,7 @@ internal static class Program
                 layer.Render();
             UI.ImGuiController.End();
 
-            // Raylib.DrawFPS(0, 0);
+            Raylib.DrawFPS(0, 0);
             Raylib.EndDrawing();
         }
 
