@@ -85,28 +85,27 @@ public class WorldRepMesh
         var uu = Vector3.Dot(renderPoly.TexU, renderPoly.TexU);
         var vv = Vector3.Dot(renderPoly.TexV, renderPoly.TexV);
         var uv = Vector3.Dot(renderPoly.TexU, renderPoly.TexV);
-        var lmUScale = 1.0f / light.Width;
-        var lmVScale = 1.0f / light.Height;
+        var lmUScale = 4.0f / light.Width;
+        var lmVScale = 4.0f / light.Height;
 
         // TODO: Support newdark (requires some importer changes)
-        var renderUBase = renderPoly.BaseU / (16 * 256);
-        var renderVBase = renderPoly.BaseV / (16 * 256);
-        var lmUBase = lmUScale * (renderUBase + (0.5f - light.BaseU) / 1);
-        var lmVBase = lmVScale * (renderVBase + (0.5f - light.BaseV) / 1);
+        var renderUBase = renderPoly.BaseU / 4096;
+        var renderVBase = renderPoly.BaseV / 4096;
+        var lmUBase = lmUScale * (renderUBase + (0.5f - light.BaseU) / 4);
+        var lmVBase = lmVScale * (renderVBase + (0.5f - light.BaseV) / 4);
         var anchor = cell.PVertices[cell.PIndexList[idxOffset + renderPoly.TextureAnchor]];
         uvIdx = new int[polyVertCount];
         if (uv == 0.0)
         {
             var lmUVec = renderPoly.TexU * lmUScale / uu;
             var lmVVec = renderPoly.TexV * lmVScale / vv;
-            for (var k = polyVertCount - 1; k >= 0; k--)
+            for (var i = 0; i < polyVertCount; i++)
             {
-                var delta = cell.PVertices[cell.PIndexList[idxOffset + k]] - anchor;
-                var lmU = Vector3.Dot(delta, lmUVec) + lmUBase;
-                var lmV = Vector3.Dot(delta, lmVVec) + lmVBase;
-                uvIdx[k] = lmUvList.Count / 2;
-                lmUvList.Add(lmU);
-                lmUvList.Add(lmV);
+                uvIdx[i] = lmUvList.Count / 2;
+                
+                var delta = cell.PVertices[cell.PIndexList[idxOffset + i]] - anchor;
+                lmUvList.Add(Vector3.Dot(delta, lmUVec) + lmUBase);
+                lmUvList.Add(Vector3.Dot(delta, lmVVec) + lmVBase);
             }
         }
         else
@@ -116,16 +115,15 @@ public class WorldRepMesh
             var lmVv = vv * lmUScale * denom;
             var lmUvu = lmUScale * denom * uv;
             var lmUvv = lmVScale * denom * uv;
-            for (var k = polyVertCount - 1; k >= 0; k--)
+            for (var k = 0; k < polyVertCount; k++)
             {
+                uvIdx[k] = lmUvList.Count / 2;
+
                 var delta = cell.PVertices[cell.PIndexList[idxOffset + k]] - anchor;
                 var du = Vector3.Dot(delta, renderPoly.TexU);
                 var dv = Vector3.Dot(delta, renderPoly.TexV);
-                var lmU = lmUBase + lmVv * du - lmUvu * dv;
-                var lmV = lmVBase + lmUu * dv - lmUvv * du;
-                uvIdx[k] = lmUvList.Count / 2;
-                lmUvList.Add(lmU);
-                lmUvList.Add(lmV);
+                lmUvList.Add(lmUBase + lmVv * du - lmUvu * dv);
+                lmUvList.Add(lmVBase + lmUu * dv - lmUvv * du);
             }
         }
     }
@@ -182,7 +180,7 @@ public class WorldRepMesh
                 u = (rect.X + rect.Width * u) / (int) bounds.Width;
                 v = (rect.Y + rect.Height * v) / (int) bounds.Height;
                 uvs[2 * idx] = u;
-                uvs[2 * idx + 1] = v;
+                uvs[2 * idx + 1] = 1 - v;
             }
         }
     }
