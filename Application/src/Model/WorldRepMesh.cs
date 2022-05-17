@@ -7,12 +7,14 @@ namespace RlImGuiApp.Model;
 public class WorldRepMesh
 {
     private Raylib_cs.Model[] Models { get; }
+    private BoundingBox[] BoundingBoxes { get; }
     private RenderTexture2D[] LmTextures { get; }
 
     public WorldRepMesh(LG.WorldRep worldRep)
     {
         // TODO: Lightmap UVs are still incorrect
         var models = new List<Raylib_cs.Model>();
+        var boundingBoxes = new List<BoundingBox>();
         var lmTextures = new List<RenderTexture2D>();
         var numCells = worldRep.Cells.Length;
         for (int i = 0; i < numCells; i++)
@@ -61,10 +63,12 @@ public class WorldRepMesh
             var model = Raylib.LoadModelFromMesh(mesh);
             Raylib.SetMaterialTexture(ref model, 0, MaterialMapIndex.MATERIAL_MAP_DIFFUSE, ref lmRenderTexture.texture);
             models.Add(model);
+            boundingBoxes.Add(Raylib.GetModelBoundingBox(model));
             lmTextures.Add(lmRenderTexture);
         }
 
         Models = models.ToArray();
+        BoundingBoxes = boundingBoxes.ToArray();
         LmTextures = lmTextures.ToArray();
     }
 
@@ -89,10 +93,10 @@ public class WorldRepMesh
         var lmVScale = 4.0f / light.Height;
 
         // TODO: Support newdark (requires some importer changes)
-        var renderUBase = renderPoly.BaseU / 4096;
-        var renderVBase = renderPoly.BaseV / 4096;
-        var lmUBase = lmUScale * (renderUBase + (0.5f - light.BaseU) / 4);
-        var lmVBase = lmVScale * (renderVBase + (0.5f - light.BaseV) / 4);
+        var renderUBase = renderPoly.BaseU / 4096.0f;
+        var renderVBase = renderPoly.BaseV / 4096.0f;
+        var lmUBase = lmUScale * (renderUBase + (0.5f - light.BaseU) / 4.0f);
+        var lmVBase = lmVScale * (renderVBase + (0.5f - light.BaseV) / 4.0f);
         var anchor = cell.PVertices[cell.PIndexList[idxOffset + renderPoly.TextureAnchor]];
         uvIdx = new int[polyVertCount];
         if (uv == 0.0)
@@ -110,7 +114,7 @@ public class WorldRepMesh
         }
         else
         {
-            var denom = 1 / (uu * vv - uv * uv);
+            var denom = 1.0f / (uu * vv - uv * uv);
             var lmUu = uu * lmVScale * denom;
             var lmVv = vv * lmUScale * denom;
             var lmUvu = lmUScale * denom * uv;
@@ -217,11 +221,19 @@ public class WorldRepMesh
 
     public void Render()
     {
-        // TODO: Frustum and distance culling
-        foreach (var t in Models)
+        var frustum = new Frustum();
+        var numModels = Models.Length;
+        for (var i = 0; i < numModels; i++)
         {
-            Raylib.DrawModel(t, Vector3.Zero, 1, Color.WHITE);
-            Raylib.DrawModelWires(t, Vector3.Zero, 1, Color.BLACK);
+            var model = Models[i];
+            var bb = BoundingBoxes[i];
+
+            // Frustum culling
+            if (!frustum.AabbInside(bb)) continue;
+
+            Raylib.DrawModel(model, Vector3.Zero, 1, Color.WHITE);
+            Raylib.DrawModelWires(model, Vector3.Zero, 1, Color.BLACK);
+            Raylib.DrawBoundingBox(bb, Color.GOLD);
         }
     }
 

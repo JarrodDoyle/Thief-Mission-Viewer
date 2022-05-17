@@ -38,7 +38,7 @@ internal static class Program
         {
             foreach (var layer in uiLayers)
                 layer.Update();
-            
+
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.BLACK);
             Raylib.UpdateCamera(ref camera);
