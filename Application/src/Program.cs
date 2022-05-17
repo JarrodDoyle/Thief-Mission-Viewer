@@ -43,6 +43,9 @@ internal static class Program
             Raylib.ClearBackground(Color.BLACK);
             Raylib.UpdateCamera(ref camera);
 
+            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                WorldRepManager.SelectCell(Raylib.GetMouseRay(Raylib.GetMousePosition(), camera));
+
             Raylib.BeginMode3D(camera);
             WorldRepManager.Render();
             Raylib.EndMode3D();

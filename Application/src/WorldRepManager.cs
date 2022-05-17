@@ -45,4 +45,9 @@ public static class WorldRepManager
     {
         _worldRepMesh?.ExportLightmaps(DataDir);
     }
+
+    public static void SelectCell(Raylib_cs.Ray ray)
+    {
+        _worldRepMesh?.SelectCell(ray);
+    }
 }

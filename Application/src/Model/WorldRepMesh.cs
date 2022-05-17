@@ -9,9 +9,11 @@ public class WorldRepMesh
     private Raylib_cs.Model[] Models { get; }
     private BoundingBox[] BoundingBoxes { get; }
     private RenderTexture2D[] LmTextures { get; }
+    private int ActiveBBox { get; set; }
 
     public WorldRepMesh(LG.WorldRep worldRep)
     {
+        ActiveBBox = -1;
         // TODO: Lightmap UVs are still incorrect
         var models = new List<Raylib_cs.Model>();
         var boundingBoxes = new List<BoundingBox>();
@@ -232,8 +234,9 @@ public class WorldRepMesh
             if (!frustum.AabbInside(bb)) continue;
 
             Raylib.DrawModel(model, Vector3.Zero, 1, Color.WHITE);
-            Raylib.DrawModelWires(model, Vector3.Zero, 1, Color.BLACK);
-            Raylib.DrawBoundingBox(bb, Color.GOLD);
+            // Raylib.DrawModelWires(model, Vector3.Zero, 1, Color.BLACK);
+            
+            if (i == ActiveBBox) Raylib.DrawBoundingBox(bb, Color.GOLD);
         }
     }
 
@@ -243,6 +246,26 @@ public class WorldRepMesh
         {
             var filePath = $"{dirPath}/Outputs/lm-{i}.png";
             Raylib.ExportImage(Raylib.LoadImageFromTexture(LmTextures[i].texture), filePath);
+        }
+    }
+
+    public void SelectCell(Ray ray)
+    {
+        // TODO: Ignore backfaces during selection
+        // TODO: Fix bug where it just suddenly stops working??
+        var numModels = Models.Length;
+        var minDistance = float.MaxValue;
+        for (var i = 0; i < numModels; i++)
+        {
+            var bbResult = Raylib.GetRayCollisionBox(ray, BoundingBoxes[i]);
+            if (!bbResult.hit) continue;
+            
+            var mdResult = Raylib.GetRayCollisionModel(ray, Models[i]);
+            if (!mdResult.hit || mdResult.distance >= minDistance) continue;
+            // if (Vector3.Dot(mdResult.normal, ray.direction) >= 0) continue;
+
+            ActiveBBox = i;
+            minDistance = mdResult.distance;
         }
     }
 }
