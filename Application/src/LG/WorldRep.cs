@@ -106,7 +106,7 @@ public readonly struct WrCellHeader
         NumVList = reader.ReadUInt16();
         AnimLightCount = reader.ReadByte();
         MotionIndex = reader.ReadByte();
-        SphereCenter = new Vector3 {X = reader.ReadSingle(), Y = reader.ReadSingle(), Z = reader.ReadSingle()};
+        SphereCenter = new Vector3 {X = -reader.ReadSingle(), Z = reader.ReadSingle(), Y = reader.ReadSingle()};
         SphereRadius = reader.ReadSingle();
     }
 }
@@ -125,8 +125,8 @@ public readonly struct WrRenderPoly
 
     public WrRenderPoly(BinaryReader reader, bool extended)
     {
-        TexU = new Vector3 {X = reader.ReadSingle(), Y = reader.ReadSingle(), Z = reader.ReadSingle()};
-        TexV = new Vector3 {X = reader.ReadSingle(), Y = reader.ReadSingle(), Z = reader.ReadSingle()};
+        TexU = new Vector3 {X = -reader.ReadSingle(), Z = reader.ReadSingle(), Y = reader.ReadSingle()};
+        TexV = new Vector3 {X = -reader.ReadSingle(), Z = reader.ReadSingle(), Y = reader.ReadSingle()};
         if (extended)
         {
             BaseU = reader.ReadSingle();
@@ -144,7 +144,7 @@ public readonly struct WrRenderPoly
 
         CachedSurface = reader.ReadUInt16();
         TextureMag = reader.ReadSingle();
-        Center = new Vector3 {X = reader.ReadSingle(), Y = reader.ReadSingle(), Z = reader.ReadSingle()};
+        Center = new Vector3 {X = -reader.ReadSingle(), Z = reader.ReadSingle(), Y = reader.ReadSingle()};
     }
 }
 
@@ -155,7 +155,7 @@ public readonly struct WrPlane
 
     public WrPlane(BinaryReader reader)
     {
-        Normal = new Vector3 {X = reader.ReadSingle(), Y = reader.ReadSingle(), Z = reader.ReadSingle()};
+        Normal = new Vector3 {X = -reader.ReadSingle(), Z = reader.ReadSingle(), Y = reader.ReadSingle()};
         Distance = reader.ReadSingle();
     }
 }
