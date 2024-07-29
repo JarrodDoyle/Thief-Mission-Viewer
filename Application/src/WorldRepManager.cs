@@ -11,7 +11,7 @@ public static class WorldRepManager
 
     static WorldRepManager()
     {
-        DataDir = "../../../../Data";
+        DataDir = "Data";
         Files = new DirectoryInfo(DataDir).GetFiles();
         SelectedFile = -1;
     }
